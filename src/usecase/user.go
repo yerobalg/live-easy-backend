@@ -1,13 +1,14 @@
 package usecase
 
 import (
+	"os"
+
+	"github.com/gin-gonic/gin"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/sdk/jwt"
 	"live-easy-backend/sdk/password"
 	"live-easy-backend/src/entity"
 	"live-easy-backend/src/repository"
-
-	"github.com/gin-gonic/gin"
 )
 
 type UserInterface interface {
@@ -49,6 +50,37 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 	return userResponse, nil
 }
 
+func (u *User) GoogleCallback(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (map[string]interface{}, error) {
+	if callbackParam.State != os.Getenv("OAURH_STATE") {
+		return nil, errors.NewWithCode(401, "Invalid state", "HTTPStatusUnauthorized")
+	}
+
+	if callbackParam.Code == "" {
+		return nil, errors.NewWithCode(401, "Invalid code", "HTTPStatusUnauthorized")
+	}
+
+	userResponse, err := u.userRepo.GoogleCallback(ctx, callbackParam.Code)
+	if err != nil {
+		return nil, err
+	}
+
+	return userResponse, nil
+}
+
+func (u *User) LoginWithGoogle(ctx *gin.Context, userParam entity.UserParam, user entity.User) (entity.UserLoginResponse, error) {
+	var userResponse entity.UserLoginResponse
+
+	token, err := jwt.GetToken(user)
+	if err != nil {
+		return userResponse, errors.NewWithCode(500, "Failed to generate token", "HTTPStatusInternalServerError")
+	}
+
+	userResponse.User = user
+	userResponse.Token = token
+
+	return userResponse, nil
+}
+
 func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
 	var user entity.User
 
@@ -64,6 +96,7 @@ func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputPara
 	user = entity.User{
 		Email:    userInput.Email,
 		Password: hashedPassword,
+		Name:     userInput.Name,
 	}
 
 	user, err = u.userRepo.Create(ctx, user)
@@ -79,6 +112,7 @@ func (u *User) RegisterWithGoogle(ctx *gin.Context, userInput entity.UserRegiste
 
 	user = entity.User{
 		Email:           userInput.Email,
+		Name:            userInput.Name,
 		IsGoogleAccount: true,
 	}
 

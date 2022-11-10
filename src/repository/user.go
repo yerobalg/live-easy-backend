@@ -1,8 +1,13 @@
 package repository
 
 import (
+	"net/http"
+	"io/ioutil"
+	"encoding/json"
+
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
+	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/src/entity"
 )
@@ -10,14 +15,47 @@ import (
 type UserInterface interface {
 	Get(ctx *gin.Context, params entity.UserParam) (entity.User, error)
 	Create(ctx *gin.Context, user entity.User) (entity.User, error)
+	GoogleCallback(ctx *gin.Context, code string) (map[string]interface{}, error)
 }
 
 type user struct {
 	db sql.DB
+	oauth infrastructure.OAuth
 }
 
-func InitUser(db sql.DB) UserInterface {
-	return &user{db: db}
+func InitUser(db sql.DB, oauth infrastructure.OAuth) UserInterface {
+	return &user{
+		db: db,
+		oauth: oauth,
+	}
+}
+
+func (u *user) GoogleCallback(ctx *gin.Context, code string) (map[string]interface{}, error) {
+	var userResponseGoogle map[string]interface{}
+	
+	googleConfig := u.oauth.Config
+	token, err := googleConfig.Exchange(ctx, code)
+	if err != nil {
+		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
+	}
+
+	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
+	if err != nil {
+		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
+	}
+	defer response.Body.Close()
+
+	responseData, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
+	}
+
+	err = json.Unmarshal(responseData, &userResponseGoogle)
+	if err != nil {
+		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
+	}
+
+	return userResponseGoogle, nil
 }
 
 func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, error) {

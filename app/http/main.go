@@ -40,7 +40,7 @@ func main() {
 	}
 
 	// init repository
-	repo := repository.Init(*db)
+	repo := repository.Init(*db, oauth)
 
 	// init usecase
 	uc := usecase.Init(repo)

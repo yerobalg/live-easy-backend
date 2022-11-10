@@ -14,7 +14,7 @@ type User struct {
 	DeletedBy *int64         `json:"deletedBy" gorm:"default:null"`
 
 	Email           string `json:"email" gorm:"not null;unique;type:varchar(255)"`
-	Password        string `json:"-" gorm:"not null;type:text"`
+	Password        string `json:"-" gorm:"type:text"`
 	Name            string `json:"name" gorm:"not null;type:varchar(255)"`
 	IsGoogleAccount bool   `json:"isGoogleAccount" gorm:"not null;default:false"`
 }
@@ -34,6 +34,11 @@ type UserRegisterInputParam struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Name     string `json:"name" binding:"required"`
+}
+
+type GoogleCallbackParam struct {
+	Code  string `form:"code"`
+	State string `form:"state"`
 }
 
 type UserLoginResponse struct {
