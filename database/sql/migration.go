@@ -12,6 +12,7 @@ type Migration struct {
 func (m *Migration) RunMigration() {
 	m.Db.AutoMigrate(
 		&entity.User{},
+		&entity.Medicine{},
 	)
 }
 

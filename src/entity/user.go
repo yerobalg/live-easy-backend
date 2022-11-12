@@ -5,6 +5,7 @@ import (
 )
 
 type User struct {
+	// Basic Fields
 	ID        int64          `gorm:"primary_key" json:"id"`
 	CreatedAt int64          `json:"createdAt"`
 	UpdatedAt int64          `json:"updatedAt"`
