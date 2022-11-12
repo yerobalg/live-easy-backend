@@ -26,7 +26,7 @@ type UserParam struct {
 }
 
 type UserLoginInputParam struct {
-	Email    string `json:"username" binding:"required,email"`
+	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 }
 
