@@ -12,8 +12,8 @@ type Storage struct {
 	client     *storage.Client
 }
 
-func (s *Storage) Init(bucketName string) *Storage {
-	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile("credentials.json"))
+func InitStorage(bucketName string) *Storage {
+	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile("cloud_storage_credential.json"))
 	if err != nil {
 		panic(err)
 	}

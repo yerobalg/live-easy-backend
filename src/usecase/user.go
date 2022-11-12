@@ -14,6 +14,7 @@ import (
 type UserInterface interface {
 	Login(ctx *gin.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error)
 	Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error)
+	LoginWithGoogle(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (entity.UserLoginResponse, error)
 }
 
 type User struct {
@@ -35,6 +36,10 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 		return userResponse, err
 	}
 
+	if user.IsGoogleAccount {
+		return userResponse, errors.NewWithCode(401, "This is a google account, please login with google", "HTTPStatusUnauthorized")
+	}
+
 	if !password.Compare(user.Password, userInput.Password) {
 		return userResponse, errors.NewWithCode(401, "Wrong password", "HTTPStatusUnauthorized")
 	}
@@ -50,25 +55,37 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 	return userResponse, nil
 }
 
-func (u *User) GoogleCallback(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (map[string]interface{}, error) {
-	if callbackParam.State != os.Getenv("OAURH_STATE") {
-		return nil, errors.NewWithCode(401, "Invalid state", "HTTPStatusUnauthorized")
+func (u *User) LoginWithGoogle(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (entity.UserLoginResponse, error) {
+	var userResponse entity.UserLoginResponse
+	if callbackParam.State != os.Getenv("OAUTH_STATE") {
+		return userResponse, errors.NewWithCode(401, "Invalid state", "HTTPStatusUnauthorized")
 	}
 
 	if callbackParam.Code == "" {
-		return nil, errors.NewWithCode(401, "Invalid code", "HTTPStatusUnauthorized")
+		return userResponse, errors.NewWithCode(401, "Invalid code", "HTTPStatusUnauthorized")
 	}
 
-	userResponse, err := u.userRepo.GoogleCallback(ctx, callbackParam.Code)
+	userResponseGoogle, err := u.userRepo.GoogleCallback(ctx, callbackParam.Code)
 	if err != nil {
-		return nil, err
+		return userResponse, err
 	}
 
-	return userResponse, nil
-}
-
-func (u *User) LoginWithGoogle(ctx *gin.Context, userParam entity.UserParam, user entity.User) (entity.UserLoginResponse, error) {
-	var userResponse entity.UserLoginResponse
+	userParam := entity.UserParam{
+		Email: userResponseGoogle["email"].(string),
+	}
+	user, err := u.userRepo.Get(ctx, userParam)
+	if err != nil && errors.GetCode(err) != 404 {
+		return userResponse, err
+	} else if errors.GetCode(err) == 404 {
+		userInput := entity.UserRegisterInputParam{
+			Email: userResponseGoogle["email"].(string),
+			Name:  userResponseGoogle["name"].(string),
+		}
+		user, err = u.registerWithGoogle(ctx, userInput)
+		if err != nil {
+			return userResponse, err
+		}
+	}
 
 	token, err := jwt.GetToken(user)
 	if err != nil {
@@ -107,7 +124,7 @@ func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputPara
 	return user, nil
 }
 
-func (u *User) RegisterWithGoogle(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
+func (u *User) registerWithGoogle(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
 	var user entity.User
 
 	user = entity.User{

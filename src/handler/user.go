@@ -1,8 +1,11 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
+	"fmt"
 	"live-easy-backend/src/entity"
+	"os"
+
+	"github.com/gin-gonic/gin"
 )
 
 func (r *rest) Login(ctx *gin.Context) {
@@ -26,6 +29,31 @@ func (r *rest) Login(ctx *gin.Context) {
 	}
 
 	SuccessResponse(ctx, "Login success", userResponse)
+}
+
+func (r *rest) LoginWithGoogle(ctx *gin.Context) {
+	googleConfig := r.oauth.Config
+	fmt.Println(os.Getenv("OAUTH_STATE"))
+	url := googleConfig.AuthCodeURL(os.Getenv("OAUTH_STATE"))
+
+	SuccessResponse(ctx, "Successfully Get Redirect URL", url)
+}
+
+func (r *rest) LoginWithGoogleCallback(ctx *gin.Context) {
+	var callbackParam entity.GoogleCallbackParam
+
+	if err := r.BindParam(ctx, &callbackParam); err != nil {
+		ErrorResponse(ctx, err)
+		return
+	}
+
+	userResponse, err := r.uc.User.LoginWithGoogle(ctx, callbackParam)
+	if err != nil {
+		ErrorResponse(ctx, err)
+		return
+	}
+
+	SuccessResponse(ctx, "Login with google success", userResponse)
 }
 
 func (r *rest) GetUserProfile(ctx *gin.Context) {
