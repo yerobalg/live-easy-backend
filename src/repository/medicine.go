@@ -5,6 +5,7 @@ import (
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/src/entity"
+	"live-easy-backend/sdk/errors"
 )
 
 type MedicineIntercafe interface {
@@ -33,8 +34,11 @@ func (m *medicine) Create(ctx *gin.Context, medicine entity.Medicine) (entity.Me
 func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error) {
 	var medicine entity.Medicine
 
-	if err := m.db.Where(params).First(&medicine).Error; err != nil {
-		return medicine, err
+	res := m.db.Where(params).First(&medicine) 
+	if res.Error != nil {
+		return medicine, res.Error
+	} else if res.RowsAffected == 0 {
+		return medicine, errors.NotFound("Medicine")
 	}
 
 	return medicine, nil
@@ -63,4 +67,15 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	pg.ProcessPagination()
 
 	return medicine, &pg, nil
+}
+
+func (m *medicine) Update(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error) {
+	res := m.db.Save(&medicine)
+	if res.Error != nil {
+		return medicine, res.Error
+	} else if res.RowsAffected == 0 {
+		return medicine, errors.NotFound("Medicine")
+	}
+
+	return medicine, nil
 }
