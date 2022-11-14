@@ -83,7 +83,8 @@ func (r *rest) Run() {
 		v1.POST("medicine", r.CreateMedicine)
 		v1.GET("medicine/:id", r.GetMedicine)
 		v1.GET("medicine", r.GetListMedicines)
-
+		v1.PUT("medicine/:id", r.UpdateMedicine)
+		v1.DELETE("medicine/:id", r.DeleteMedicine)
 	}
 
 	r.http.Run(":" + os.Getenv("APP_PORT"))

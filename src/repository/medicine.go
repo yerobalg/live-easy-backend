@@ -12,7 +12,7 @@ type MedicineInterface interface {
 	Create(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error)
 	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
 	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
-	Update(ctx *gin.Context, medicineParam entity.MedicineParam) error
+	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error
 	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
 }
 
@@ -76,12 +76,12 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicine, &pg, nil
 }
 
-func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error {
 	res := m.db.
 		GetDB(ctx).
 		Model(entity.Medicine{}).
 		Where(&medicineParam).
-		Updates(medicineParam)
+		Updates(&medicine)
 
 	if res.Error != nil {
 		return res.Error
@@ -95,9 +95,8 @@ func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam) 
 func (m *medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
 	res := m.db.
 		GetDB(ctx).
-		Model(entity.Medicine{}).
 		Where(&medicineParam).
-		Delete(&medicineParam)
+		Delete(&entity.Medicine{})
 	if res.Error != nil {
 		return res.Error
 	} else if res.RowsAffected == 0 {

@@ -14,7 +14,7 @@ type MedicineInterface interface {
 	Create(ctx *gin.Context, medicineInput entity.MedicineInputParam) (entity.Medicine, error)
 	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
 	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
-	Update(ctx *gin.Context, medicineParam entity.MedicineParam) error
+	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam) error
 	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
 }
 
@@ -61,7 +61,7 @@ func (m *Medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 
 func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
 	params.UserID = auth.GetUserID(ctx)
-	
+
 	medicines, pg, err := m.repo.GetList(ctx, params)
 	if err != nil {
 		return medicines, pg, err
@@ -70,8 +70,23 @@ func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicines, pg, nil
 }
 
-func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam) error {
-	err := m.repo.Update(ctx, medicineParam)
+func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam) error {
+	userID := auth.GetUserID(ctx)
+
+	medicine := entity.Medicine{
+		Name:      medicineInput.Name,
+		Price:     medicineInput.Price,
+		Quantity:  medicineInput.Quantity,
+		UpdatedBy: null.Int64From(userID),
+	}
+
+	if medicine.Price != int64(0) {
+		medicine.PriceString = numeric.IntToRupiah(medicine.Price)
+	}
+
+	medicineParam.UserID = userID
+
+	err := m.repo.Update(ctx, medicineParam, medicine)
 	if err != nil {
 		return err
 	}
@@ -80,6 +95,8 @@ func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam) 
 }
 
 func (m *Medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+	medicineParam.UserID = auth.GetUserID(ctx)
+
 	err := m.repo.Delete(ctx, medicineParam)
 	if err != nil {
 		return err
