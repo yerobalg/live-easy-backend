@@ -1,10 +1,15 @@
 package repository
 
 import (
+	"fmt"
+	"io"
+	"net/url"
+
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
+	"live-easy-backend/sdk/file"
 	"live-easy-backend/src/entity"
 )
 
@@ -14,6 +19,7 @@ type MedicineInterface interface {
 	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
 	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error
 	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
+	UploadImage(ctx *gin.Context, file *file.File) (string, error)
 }
 
 type medicine struct {
@@ -104,4 +110,37 @@ func (m *medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) 
 	}
 
 	return nil
+}
+
+func (m *medicine) UploadImage(ctx *gin.Context, file *file.File) (string, error) {
+	var imageURL string
+
+	storageHandler, err := m.storage.GetObjectPlace(fmt.Sprintf("%s/%s", m.storage.FolderName, file.Meta.Filename))
+	if err != nil {
+		return imageURL, errors.InternalServerError(err.Error())
+	}
+
+	storageWriter := storageHandler.NewWriter(ctx)
+
+	if _, err := io.Copy(storageWriter, file.Content); err != nil {
+		return imageURL, errors.InternalServerError(err.Error())
+	}
+
+	if err := storageWriter.Close(); err != nil {
+		return imageURL, errors.InternalServerError(err.Error())
+	}
+
+	parsedURL, err := url.Parse(fmt.Sprintf(
+		"%s/%s/%s/%s",
+		m.storage.BaseURL,
+		m.storage.BucketName,
+		m.storage.FolderName,
+		file.Meta.Filename,
+	))
+	if err != nil {
+		return imageURL, errors.InternalServerError(err.Error())
+	}
+	imageURL = parsedURL.String()
+
+	return imageURL, nil
 }

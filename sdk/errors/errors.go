@@ -12,9 +12,9 @@ type Errors struct {
 }
 
 const (
-	notFoundType            = "HTTPStatusNotFound"
-	internalServerErrorType = "HTTPStatusInternalServerError"
-	badRequestType          = "HTTPStatusBadRequest"
+	NotFoundType            = "HTTPStatusNotFound"
+	InternalServerErrorType = "HTTPStatusInternalServerError"
+	BadRequestType          = "HTTPStatusBadRequest"
 )
 
 func (e *Errors) Error() string {
@@ -32,11 +32,15 @@ func NewWithCode(code int64, message, errType string) error {
 }
 
 func NotFound(entity string) error {
-	return NewWithCode(http.StatusNotFound, entity+" not found", notFoundType)
+	return NewWithCode(http.StatusNotFound, entity+" not found", NotFoundType)
 }
 
 func InternalServerError(message string) error {
-	return NewWithCode(http.StatusInternalServerError, message, internalServerErrorType)
+	return NewWithCode(http.StatusInternalServerError, message, InternalServerErrorType)
+}
+
+func BadRequest(message string) error {
+	return NewWithCode(http.StatusBadRequest, message, BadRequestType)
 }
 
 func GetType(err error) string {
@@ -48,7 +52,7 @@ func GetType(err error) string {
 		return err.(*Errors).Type
 	}
 
-	return internalServerErrorType
+	return InternalServerErrorType
 }
 
 func GetCode(err error) int64 {

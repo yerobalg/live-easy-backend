@@ -26,9 +26,13 @@ func main() {
 
 	// init OAuth
 	oauth := infrastructure.InitOAuth()
-	
+
 	// init Storage
-	storage := infrastructure.InitStorage("live-easy")
+	storage := infrastructure.InitStorage(
+		os.Getenv("STORAGE_BASE_URL"),
+		os.Getenv("STORAGE_BUCKET_NAME"),
+		os.Getenv("STORAGE_FOLDER_NAME"),
+	)
 
 	// run migration
 	if os.Getenv("DB_USERNAME") == "root" {

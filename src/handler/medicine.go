@@ -2,6 +2,8 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"live-easy-backend/sdk/errors"
+	"live-easy-backend/sdk/file"
 	"live-easy-backend/src/entity"
 )
 
@@ -12,7 +14,13 @@ func (r *rest) CreateMedicine(ctx *gin.Context) {
 		return
 	}
 
-	medicine, err := r.uc.Medicine.Create(ctx, medicineInput)
+	image, err := file.Init(ctx, "image")
+	if err != nil {
+		ErrorResponse(ctx, errors.InternalServerError(err.Error()))
+		return
+	}
+
+	medicine, err := r.uc.Medicine.Create(ctx, medicineInput, image)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return

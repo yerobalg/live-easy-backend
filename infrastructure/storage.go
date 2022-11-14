@@ -8,18 +8,22 @@ import (
 )
 
 type Storage struct {
+	BaseURL    string
 	BucketName string
+	FolderName string
 	client     *storage.Client
 }
 
-func InitStorage(bucketName string) *Storage {
+func InitStorage(baseURL string, bucketName string, folderName string) *Storage {
 	client, err := storage.NewClient(context.Background(), option.WithCredentialsFile("cloud_storage_credential.json"))
 	if err != nil {
 		panic(err)
 	}
 
 	return &Storage{
+		BaseURL:    baseURL,
 		BucketName: bucketName,
+		FolderName: folderName,
 		client:     client,
 	}
 }

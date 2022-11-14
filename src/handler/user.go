@@ -1,11 +1,10 @@
 package handler
 
 import (
-	"fmt"
-	"live-easy-backend/src/entity"
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"live-easy-backend/src/entity"
 )
 
 func (r *rest) Login(ctx *gin.Context) {
@@ -33,7 +32,6 @@ func (r *rest) Login(ctx *gin.Context) {
 
 func (r *rest) LoginWithGoogle(ctx *gin.Context) {
 	googleConfig := r.oauth.Config
-	fmt.Println(os.Getenv("OAUTH_STATE"))
 	url := googleConfig.AuthCodeURL(os.Getenv("OAUTH_STATE"))
 
 	SuccessResponse(ctx, "Successfully Get Redirect URL", url, nil)
