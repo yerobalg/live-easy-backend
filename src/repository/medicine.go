@@ -4,8 +4,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
-	"live-easy-backend/src/entity"
 	"live-easy-backend/sdk/errors"
+	"live-easy-backend/src/entity"
 )
 
 type MedicineIntercafe interface {
@@ -24,7 +24,7 @@ func InitMedicine(db sql.DB, storage infrastructure.Storage) MedicineIntercafe {
 }
 
 func (m *medicine) Create(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error) {
-	if err := m.db.Create(&medicine).Error; err != nil {
+	if err := m.db.GetDB(ctx).Create(&medicine).Error; err != nil {
 		return medicine, err
 	}
 
@@ -34,7 +34,7 @@ func (m *medicine) Create(ctx *gin.Context, medicine entity.Medicine) (entity.Me
 func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error) {
 	var medicine entity.Medicine
 
-	res := m.db.Where(params).First(&medicine) 
+	res := m.db.GetDB(ctx).Where(params).First(&medicine)
 	if res.Error != nil {
 		return medicine, res.Error
 	} else if res.RowsAffected == 0 {
@@ -51,6 +51,7 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	offset := pg.GetOffset()
 
 	if err := m.db.
+		GetDB(ctx).
 		Where(params).
 		Offset(int(offset)).
 		Limit(int(pg.Limit)).
@@ -59,6 +60,7 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	}
 
 	if err := m.db.
+		GetDB(ctx).
 		Model(&medicine).
 		Where(params).
 		Count(&pg.TotalElement).Error; err != nil {
@@ -69,13 +71,33 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicine, &pg, nil
 }
 
-func (m *medicine) Update(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error) {
-	res := m.db.Save(&medicine)
+func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+	res := m.db.
+		GetDB(ctx).
+		Model(entity.Medicine{}).
+		Where(&medicineParam).
+		Updates(medicineParam)
+
 	if res.Error != nil {
-		return medicine, res.Error
+		return res.Error
 	} else if res.RowsAffected == 0 {
-		return medicine, errors.NotFound("Medicine")
+		return errors.NotFound("Medicine")
 	}
 
-	return medicine, nil
+	return nil
+}
+
+func (m *medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+	res := m.db.
+		GetDB(ctx).
+		Model(entity.Medicine{}).
+		Where(&medicineParam).
+		Delete(&medicineParam)
+	if res.Error != nil {
+		return res.Error
+	} else if res.RowsAffected == 0 {
+		return errors.NotFound("Medicine")
+	}
+
+	return nil
 }
