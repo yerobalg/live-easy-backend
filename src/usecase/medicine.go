@@ -60,6 +60,8 @@ func (m *Medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 }
 
 func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
+	params.UserID = auth.GetUserID(ctx)
+	
 	medicines, pg, err := m.repo.GetList(ctx, params)
 	if err != nil {
 		return medicines, pg, err

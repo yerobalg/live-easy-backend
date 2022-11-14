@@ -28,7 +28,7 @@ func (r *rest) Login(ctx *gin.Context) {
 		return
 	}
 
-	SuccessResponse(ctx, "Login success", userResponse)
+	SuccessResponse(ctx, "Login success", userResponse, nil)
 }
 
 func (r *rest) LoginWithGoogle(ctx *gin.Context) {
@@ -36,7 +36,7 @@ func (r *rest) LoginWithGoogle(ctx *gin.Context) {
 	fmt.Println(os.Getenv("OAUTH_STATE"))
 	url := googleConfig.AuthCodeURL(os.Getenv("OAUTH_STATE"))
 
-	SuccessResponse(ctx, "Successfully Get Redirect URL", url)
+	SuccessResponse(ctx, "Successfully Get Redirect URL", url, nil)
 }
 
 func (r *rest) LoginWithGoogleCallback(ctx *gin.Context) {
@@ -53,13 +53,13 @@ func (r *rest) LoginWithGoogleCallback(ctx *gin.Context) {
 		return
 	}
 
-	SuccessResponse(ctx, "Login with google success", userResponse)
+	SuccessResponse(ctx, "Login with google success", userResponse, nil)
 }
 
 func (r *rest) GetUserProfile(ctx *gin.Context) {
 	user := ctx.MustGet("user")
 
-	SuccessResponse(ctx, "Get user profile success", user)
+	SuccessResponse(ctx, "Get user profile success", user, nil)
 }
 
 func (r *rest) Register(ctx *gin.Context) {
@@ -75,6 +75,5 @@ func (r *rest) Register(ctx *gin.Context) {
 		ErrorResponse(ctx, err)
 		return
 	}
-
-	SuccessResponse(ctx, "Register success", user)
+	SuccessResponse(ctx, "Register success", user, nil)
 }

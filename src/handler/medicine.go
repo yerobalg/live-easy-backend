@@ -1,8 +1,8 @@
 package handler
 
 import (
-	"github.com/gin-gonic/gin"
 	"live-easy-backend/src/entity"
+	"github.com/gin-gonic/gin"
 )
 
 func (r *rest) CreateMedicine(ctx *gin.Context) {
@@ -18,7 +18,7 @@ func (r *rest) CreateMedicine(ctx *gin.Context) {
 		return
 	}
 
-	SuccessResponse(ctx, "Successfully created medicine", medicine)
+	SuccessResponse(ctx, "Successfully created medicine", medicine, nil)
 }
 
 func (r *rest) GetMedicine(ctx *gin.Context) {
@@ -34,5 +34,21 @@ func (r *rest) GetMedicine(ctx *gin.Context) {
 		return
 	}
 
-	SuccessResponse(ctx, "Successfully get medicine", medicine)
+	SuccessResponse(ctx, "Successfully get medicine", medicine, nil)
+}
+
+func (r *rest) GetListMedicines(ctx *gin.Context) {
+	var medicineParam entity.MedicineParam
+	if err := r.BindParam(ctx, &medicineParam); err != nil {
+		ErrorResponse(ctx, err)
+		return
+	}
+
+	medicine, pg, err := r.uc.Medicine.GetList(ctx, medicineParam)
+	if err != nil {
+		ErrorResponse(ctx, err)
+		return
+	}
+
+	SuccessResponse(ctx, "Successfully get list of medicine", medicine, pg)
 }

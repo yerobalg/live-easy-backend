@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin/binding"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
+	"live-easy-backend/src/entity"
 	"live-easy-backend/src/usecase"
 )
 
@@ -37,16 +38,18 @@ func (r *rest) BindBody(ctx *gin.Context, body interface{}) error {
 }
 
 type Response struct {
-	Message   string      `json:"message"`
-	IsSuccess bool        `json:"isSuccess"`
-	Data      interface{} `json:"data"`
+	Message    string                  `json:"message"`
+	IsSuccess  bool                    `json:"isSuccess"`
+	Data       interface{}             `json:"data"`
+	Pagination *entity.PaginationParam `json:"pagination"`
 }
 
-func SuccessResponse(ctx *gin.Context, message string, data interface{}) {
+func SuccessResponse(ctx *gin.Context, message string, data interface{}, pg *entity.PaginationParam) {
 	ctx.JSON(200, Response{
-		Message:   message,
-		IsSuccess: true,
-		Data:      data,
+		Message:    message,
+		IsSuccess:  true,
+		Data:       data,
+		Pagination: pg,
 	})
 }
 
@@ -79,7 +82,8 @@ func (r *rest) Run() {
 	{
 		v1.POST("medicine", r.CreateMedicine)
 		v1.GET("medicine/:id", r.GetMedicine)
-	
+		v1.GET("medicine", r.GetListMedicines)
+
 	}
 
 	r.http.Run(":" + os.Getenv("APP_PORT"))
