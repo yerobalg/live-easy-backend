@@ -1,9 +1,9 @@
 package repository
 
 import (
-	"net/http"
-	"io/ioutil"
 	"encoding/json"
+	"io"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
@@ -19,20 +19,20 @@ type UserInterface interface {
 }
 
 type user struct {
-	db sql.DB
+	db    sql.DB
 	oauth infrastructure.OAuth
 }
 
 func InitUser(db sql.DB, oauth infrastructure.OAuth) UserInterface {
 	return &user{
-		db: db,
+		db:    db,
 		oauth: oauth,
 	}
 }
 
 func (u *user) GoogleCallback(ctx *gin.Context, code string) (map[string]interface{}, error) {
 	var userResponseGoogle map[string]interface{}
-	
+
 	googleConfig := u.oauth.Config
 	token, err := googleConfig.Exchange(ctx, code)
 	if err != nil {
@@ -45,7 +45,7 @@ func (u *user) GoogleCallback(ctx *gin.Context, code string) (map[string]interfa
 	}
 	defer response.Body.Close()
 
-	responseData, err := ioutil.ReadAll(response.Body)
+	responseData, err := io.ReadAll(response.Body)
 	if err != nil {
 		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
 	}

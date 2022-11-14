@@ -11,9 +11,6 @@ type Repository struct {
 
 func Init(db sql.DB, oauth infrastructure.OAuth) *Repository {
 	return &Repository{
-		User: InitUser(
-			db,
-			oauth,
-		),
+		User: InitUser(db, oauth),
 	}
 }
