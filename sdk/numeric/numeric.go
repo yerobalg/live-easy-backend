@@ -1,12 +1,11 @@
 package numeric
 
 import (
-	"regexp"
-	"fmt"
+	"golang.org/x/text/language"
+    "golang.org/x/text/message"
 )
 
 func IntToRupiah(value int64) string {
-	str := fmt.Sprintf("%d", value)
-	result := regexp.MustCompile(`/\B(?=(\d{3})+(?!\d))/g`)
-	return "Rp" + result.ReplaceAllString(str, ".")
+	printer := message.NewPrinter(language.Indonesian)
+	return "Rp" + printer.Sprintf("%d", value)
 }

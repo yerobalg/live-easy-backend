@@ -3,6 +3,9 @@ package usecase
 import (
 	"github.com/gin-gonic/gin"
 
+	"live-easy-backend/sdk/auth"
+	"live-easy-backend/sdk/null"
+	"live-easy-backend/sdk/numeric"
 	"live-easy-backend/src/entity"
 	"live-easy-backend/src/repository"
 )
@@ -26,10 +29,15 @@ func InitMedicine(repo repository.MedicineInterface) MedicineInterface {
 }
 
 func (m *Medicine) Create(ctx *gin.Context, medicineInput entity.MedicineInputParam) (entity.Medicine, error) {
+	userID := auth.GetUserID(ctx)
 	medicine := entity.Medicine{
-		Name:     medicineInput.Name,
-		Price:    medicineInput.Price,
-		Quantity: medicineInput.Quantity,
+		Name:        medicineInput.Name,
+		Price:       medicineInput.Price,
+		PriceString: numeric.IntToRupiah(medicineInput.Price),
+		Quantity:    medicineInput.Quantity,
+		UserID:      userID,
+		CreatedBy:   null.Int64From(userID),
+		UpdatedBy:   null.Int64From(userID),
 	}
 
 	medicine, err := m.repo.Create(ctx, medicine)

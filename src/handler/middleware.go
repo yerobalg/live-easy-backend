@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"fmt"
-
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/sdk/jwt"
 	"github.com/gin-gonic/gin"
@@ -27,9 +25,6 @@ func (r *rest) checkToken(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-
-	fmt.Println(tokenClaims["data"])
-
 	ctx.Set("user", tokenClaims["data"])
 	ctx.Next()
 	return

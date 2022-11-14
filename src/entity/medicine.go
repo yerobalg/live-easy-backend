@@ -14,11 +14,12 @@ type Medicine struct {
 	UpdatedBy *int64         `json:"updatedBy" gorm:"default:null"`
 	DeletedBy *int64         `json:"deletedBy" gorm:"default:null"`
 
-	Name     string `json:"name" gorm:"not null;type:varchar(255)"`
-	Price    int64  `json:"price" gorm:"not null;"`
-	Quantity int64  `json:"quantity" gorm:"not null;"`
-	ImageURL string `json:"imageURL" gorm:"not null;type:varchar(255)"`
-	UserID   int64  `json:"userID" gorm:"index;not null"`
+	Name        string `json:"name" gorm:"not null;type:varchar(255)"`
+	Price       int64  `json:"price" gorm:"not null;"`
+	PriceString string `json:"priceString" gorm:"not null;type:varchar(255)"`
+	Quantity    int64  `json:"quantity" gorm:"not null;"`
+	ImageURL    string `json:"imageURL" gorm:"not null;type:varchar(255)"`
+	UserID      int64  `json:"userID" gorm:"index;not null"`
 }
 
 type MedicineParam struct {
