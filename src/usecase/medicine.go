@@ -18,7 +18,7 @@ type MedicineInterface interface {
 	Create(ctx *gin.Context, medicineInput entity.MedicineInputParam, image *file.File) (entity.Medicine, error)
 	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
 	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
-	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam) error
+	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error
 	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
 }
 
@@ -41,8 +41,8 @@ func (m *Medicine) Create(ctx *gin.Context, medicineInput entity.MedicineInputPa
 		PriceString: numeric.IntToRupiah(medicineInput.Price),
 		Quantity:    medicineInput.Quantity,
 		UserID:      userID,
-		CreatedAt:   *null.Int64From(now),
-		UpdatedAt:   *null.Int64From(now),
+		CreatedAt:   now,
+		UpdatedAt:   now,
 		CreatedBy:   null.Int64From(userID),
 		UpdatedBy:   null.Int64From(userID),
 	}
@@ -90,21 +90,38 @@ func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicines, pg, nil
 }
 
-func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam) error {
+func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error {
 	userID := auth.GetUserID(ctx)
 
-	medicine := entity.Medicine{
+	medicineParam.UserID = userID
+
+	var medicine entity.Medicine
+	var imageURL string
+
+	if image != nil {
+		medicine, err := m.repo.Get(ctx, medicineParam)
+		if err != nil {
+			return err
+		}
+
+		image.SetFileName(fmt.Sprintf("%d_%d", medicine.UserID, medicine.CreatedAt))
+		imageURL, err = m.repo.UploadImage(ctx, image)
+		if err != nil {
+			return err
+		}
+	}
+
+	medicine = entity.Medicine{
 		Name:      medicineInput.Name,
 		Price:     medicineInput.Price,
 		Quantity:  medicineInput.Quantity,
 		UpdatedBy: null.Int64From(userID),
+		ImageURL:  imageURL,
 	}
 
 	if medicine.Price != int64(0) {
 		medicine.PriceString = numeric.IntToRupiah(medicine.Price)
 	}
-
-	medicineParam.UserID = userID
 
 	err := m.repo.Update(ctx, medicineParam, medicine)
 	if err != nil {

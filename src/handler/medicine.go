@@ -16,7 +16,7 @@ func (r *rest) CreateMedicine(ctx *gin.Context) {
 
 	image, err := file.Init(ctx, "image")
 	if err != nil {
-		ErrorResponse(ctx, errors.InternalServerError(err.Error()))
+		ErrorResponse(ctx, errors.BadRequest(err.Error()))
 		return
 	}
 
@@ -74,7 +74,9 @@ func (r *rest) UpdateMedicine(ctx *gin.Context) {
 		return
 	}
 
-	err := r.uc.Medicine.Update(ctx, medicineParam, medicineInput)
+	image, _ := file.Init(ctx, "image")
+
+	err := r.uc.Medicine.Update(ctx, medicineParam, medicineInput, image)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return

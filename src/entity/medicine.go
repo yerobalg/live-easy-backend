@@ -35,7 +35,7 @@ type MedicineInputParam struct {
 }
 
 type MedicineUpdateInputParam struct {
-	Name     string `json:"name"`
-	Price    int64  `json:"price"`
-	Quantity int64  `json:"quantity"`
+	Name     string `json:"name" form:"name"`
+	Price    int64  `json:"price" form:"price"`
+	Quantity int64  `json:"quantity" form:"quantity"`
 }
