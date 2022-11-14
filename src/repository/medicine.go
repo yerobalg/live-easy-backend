@@ -8,7 +8,12 @@ import (
 	"live-easy-backend/src/entity"
 )
 
-type MedicineIntercafe interface {
+type MedicineInterface interface {
+	Create(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error)
+	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
+	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
+	Update(ctx *gin.Context, medicineParam entity.MedicineParam) error
+	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
 }
 
 type medicine struct {
@@ -16,7 +21,7 @@ type medicine struct {
 	storage infrastructure.Storage
 }
 
-func InitMedicine(db sql.DB, storage infrastructure.Storage) MedicineIntercafe {
+func InitMedicine(db sql.DB, storage infrastructure.Storage) MedicineInterface {
 	return &medicine{
 		db:      db,
 		storage: storage,

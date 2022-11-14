@@ -74,5 +74,11 @@ func (r *rest) Run() {
 		v1.GET("user/profile", r.GetUserProfile)
 	}
 
+	// Medicine routes
+	v1.Group("medicine")
+	{
+		v1.POST("medicine", r.CreateMedicine)
+	}
+
 	r.http.Run(":" + os.Getenv("APP_PORT"))
 }

@@ -3,13 +3,13 @@ package main
 import (
 	"os"
 
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/src/handler"
 	"live-easy-backend/src/repository"
 	"live-easy-backend/src/usecase"
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
 )
 
 func main() {
@@ -26,8 +26,9 @@ func main() {
 
 	// init OAuth
 	oauth := infrastructure.InitOAuth()
+	
 	// init Storage
-	// storage := infrastructure.InitStorage("live-easy")
+	storage := infrastructure.InitStorage("live-easy")
 
 	// run migration
 	if os.Getenv("DB_USERNAME") == "root" {
@@ -36,7 +37,7 @@ func main() {
 	}
 
 	// init repository
-	repo := repository.Init(*db, *oauth)
+	repo := repository.Init(*db, *oauth, *storage)
 
 	// init usecase
 	uc := usecase.Init(repo)

@@ -6,11 +6,13 @@ import (
 )
 
 type Repository struct {
-	User UserInterface
+	User     UserInterface
+	Medicine MedicineInterface
 }
 
-func Init(db sql.DB, oauth infrastructure.OAuth) *Repository {
+func Init(db sql.DB, oauth infrastructure.OAuth, storage infrastructure.Storage) *Repository {
 	return &Repository{
-		User: InitUser(db, oauth),
+		User:     InitUser(db, oauth),
+		Medicine: InitMedicine(db, storage),
 	}
 }
