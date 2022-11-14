@@ -20,6 +20,7 @@ type MedicineInterface interface {
 	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error
 	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
 	UploadImage(ctx *gin.Context, file *file.File) (string, error)
+	DeleteImage(ctx *gin.Context, imageURL string) error
 }
 
 type medicine struct {
@@ -143,4 +144,17 @@ func (m *medicine) UploadImage(ctx *gin.Context, file *file.File) (string, error
 	imageURL = parsedURL.String()
 
 	return imageURL, nil
+}
+
+func (m *medicine) DeleteImage(ctx *gin.Context, fileName string) error {
+	storageHandler, err := m.storage.GetObjectPlace(fmt.Sprintf("%s/%s", m.storage.FolderName, fileName))
+	if err != nil {
+		return err
+	}
+
+	if err = storageHandler.Delete(ctx); err != nil {
+		return err
+	}
+
+	return nil
 }

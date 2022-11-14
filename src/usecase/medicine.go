@@ -134,7 +134,14 @@ func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, 
 func (m *Medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
 	medicineParam.UserID = auth.GetUserID(ctx)
 
-	err := m.repo.Delete(ctx, medicineParam)
+	medicine, err := m.repo.Get(ctx, medicineParam)
+	if err != nil {
+		return err
+	}
+
+	m.repo.DeleteImage(ctx, file.GetFileNameFromURL(medicine.ImageURL))
+
+	err = m.repo.Delete(ctx, medicineParam)
 	if err != nil {
 		return err
 	}

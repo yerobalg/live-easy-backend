@@ -35,3 +35,9 @@ func (f *File) SetFileName(newName string) {
 func (f *File) IsImage() bool {
 	return strings.Contains(f.Meta.Header.Get("Content-Type"), "image")
 }
+
+func GetFileNameFromURL(url string) string {
+	fileName := strings.Split(url, "/")[len(strings.Split(url, "/"))-1]
+
+	return fileName
+}
