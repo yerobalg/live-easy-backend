@@ -78,6 +78,8 @@ func (r *rest) Run() {
 	v1.Group("medicine")
 	{
 		v1.POST("medicine", r.CreateMedicine)
+		v1.GET("medicine/:id", r.GetMedicine)
+	
 	}
 
 	r.http.Run(":" + os.Getenv("APP_PORT"))

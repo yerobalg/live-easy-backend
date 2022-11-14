@@ -1,9 +1,9 @@
 package handler
 
 import (
+	"github.com/gin-gonic/gin"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/sdk/jwt"
-	"github.com/gin-gonic/gin"
 )
 
 func (r *rest) Authorization() gin.HandlerFunc {
@@ -27,5 +27,4 @@ func (r *rest) checkToken(ctx *gin.Context) {
 	}
 	ctx.Set("user", tokenClaims["data"])
 	ctx.Next()
-	return
 }

@@ -40,10 +40,10 @@ func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 	var medicine entity.Medicine
 
 	res := m.db.GetDB(ctx).Where(params).First(&medicine)
-	if res.Error != nil {
-		return medicine, res.Error
-	} else if res.RowsAffected == 0 {
+	if res.RowsAffected == 0 {
 		return medicine, errors.NotFound("Medicine")
+	} else if res.Error != nil {
+		return medicine, res.Error
 	}
 
 	return medicine, nil

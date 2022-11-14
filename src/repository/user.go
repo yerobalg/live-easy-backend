@@ -61,9 +61,7 @@ func (u *user) GoogleCallback(ctx *gin.Context, code string) (map[string]interfa
 func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, error) {
 	var user entity.User
 
-	whereClause := u.db.GetWhereClause(params)
-
-	res := u.db.GetDB(ctx).Where(whereClause).First(&user)
+	res := u.db.GetDB(ctx).Where(params).First(&user)
 	if res.RowsAffected == 0 {
 		return user, errors.NotFound("User")
 	} else if res.Error != nil {

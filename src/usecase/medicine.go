@@ -49,6 +49,8 @@ func (m *Medicine) Create(ctx *gin.Context, medicineInput entity.MedicineInputPa
 }
 
 func (m *Medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error) {
+	params.UserID = auth.GetUserID(ctx)
+
 	medicine, err := m.repo.Get(ctx, params)
 	if err != nil {
 		return medicine, err
