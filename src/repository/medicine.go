@@ -40,13 +40,27 @@ func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 	return medicine, nil
 }
 
-func (m* medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, error) {
+func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
 	var medicine []entity.Medicine
 
-	if err := m.db.Where(params).Find(&medicine).Error; err != nil {
-		return medicine, err
+	pg := params.PaginationParam
+	offset := pg.GetOffset()
+
+	if err := m.db.
+		Where(params).
+		Offset(int(offset)).
+		Limit(int(pg.Limit)).
+		Find(&medicine).Error; err != nil {
+		return medicine, nil, err
 	}
 
-	return medicine, nil
-}
+	if err := m.db.
+		Model(&medicine).
+		Where(params).
+		Count(&pg.TotalElement).Error; err != nil {
+		return medicine, nil, err
+	}
+	pg.ProcessPagination()
 
+	return medicine, &pg, nil
+}
