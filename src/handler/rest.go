@@ -62,6 +62,7 @@ func ErrorResponse(ctx *gin.Context, err error) {
 }
 
 func (r *rest) Run() {
+	r.http.Use(r.CorsMiddleware())
 	// Auth routes
 	r.http.POST("api/v1/auth/register", r.Register)
 	r.http.POST("api/v1/auth/login", r.Login)
