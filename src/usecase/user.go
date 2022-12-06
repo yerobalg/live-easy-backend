@@ -58,18 +58,19 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 func (u *User) LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error) {
 	var userResponse entity.UserLoginResponse
 
-	firebaseUser, err := u.userRepo.GetFirebaseUser(ctx, userGoogleInput.FirebaseUID)
+	firebaseToken, err := u.userRepo.VerifyFirebaseToken(ctx, userGoogleInput.FirebaseJWT)
 	if err != nil {
-		return userResponse, err
+		return userResponse, errors.NewWithCode(401, "Invalid firebase token", "HTTPStatusUnauthorized")
 	}
 
-	userParam := entity.UserParam{Email: firebaseUser.Email}
+	email := firebaseToken.Claims["email"].(string)
+	name := firebaseToken.Claims["name"].(string)
 
-	user, err := u.userRepo.Get(ctx, userParam)
+	user, err := u.userRepo.Get(ctx, entity.UserParam{Email: email})
 	if errors.GetCode(err) == http.StatusNotFound {
 		user, err = u.registerFromGoogleAccount(ctx, entity.UserRegisterInputParam{
-			Email: firebaseUser.Email,
-			Name:  firebaseUser.DisplayName,
+			Email: email,
+			Name:  name,
 		})
 		if err != nil {
 			return userResponse, err

@@ -32,7 +32,7 @@ type UserLoginInputParam struct {
 }
 
 type UserLoginGoogleInputParam struct {
-	FirebaseUID string `json:"firebaseUID" binding:"required"`
+	FirebaseJWT string `json:"firebaseJWT" binding:"required"`
 }
 
 type UserRegisterInputParam struct {

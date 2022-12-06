@@ -12,7 +12,7 @@ import (
 type UserInterface interface {
 	Get(ctx *gin.Context, params entity.UserParam) (entity.User, error)
 	Create(ctx *gin.Context, user entity.User) (entity.User, error)
-	GetFirebaseUser(ctx *gin.Context, uid string) (*firebase_auth.UserRecord, error)
+	VerifyFirebaseToken(ctx *gin.Context, firebaseJWT string) (*firebase_auth.Token, error)
 }
 
 type user struct {
@@ -27,13 +27,8 @@ func InitUser(db sql.DB, firebase infrastructure.Firebase) UserInterface {
 	}
 }
 
-func (u *user) GetFirebaseUser(ctx *gin.Context, uid string) (*firebase_auth.UserRecord, error) {
-	user, err := u.firebase.Auth.GetUser(ctx, uid)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
+func (u *user) VerifyFirebaseToken(ctx *gin.Context, firebaseJWT string) (*firebase_auth.Token, error) {
+	return u.firebase.Auth.VerifyIDToken(ctx, firebaseJWT)
 }
 
 func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, error) {
