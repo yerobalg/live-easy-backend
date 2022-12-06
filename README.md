@@ -7,7 +7,7 @@ This backend service was made for collage final project in Integrative Programmi
 
 ## How To Run
 - Rename the ```.env.example``` file to ```.env```.
-- Fill the value in ```.env``` file. If you're my teammates in this project, ask me for the OAuth and Cloud Storage credential
+- Fill the value in ```.env``` file. If you're my teammates in this project, ask me for the Firebase and Cloud Storage credential
 - Run the server with: 
 ```bash
 $ go run app/http/main.go

@@ -1,10 +1,7 @@
 package repository
 
 import (
-	"encoding/json"
-	"io"
-	"net/http"
-
+	firebase_auth "firebase.google.com/go/auth"
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
@@ -15,47 +12,28 @@ import (
 type UserInterface interface {
 	Get(ctx *gin.Context, params entity.UserParam) (entity.User, error)
 	Create(ctx *gin.Context, user entity.User) (entity.User, error)
-	GoogleCallback(ctx *gin.Context, code string) (map[string]interface{}, error)
+	GetFirebaseUser(ctx *gin.Context, uid string) (*firebase_auth.UserRecord, error)
 }
 
 type user struct {
-	db    sql.DB
-	oauth infrastructure.OAuth
+	db       sql.DB
+	firebase infrastructure.Firebase
 }
 
-func InitUser(db sql.DB, oauth infrastructure.OAuth) UserInterface {
+func InitUser(db sql.DB, firebase infrastructure.Firebase) UserInterface {
 	return &user{
-		db:    db,
-		oauth: oauth,
+		db:       db,
+		firebase: firebase,
 	}
 }
 
-func (u *user) GoogleCallback(ctx *gin.Context, code string) (map[string]interface{}, error) {
-	var userResponseGoogle map[string]interface{}
-
-	googleConfig := u.oauth.Config
-	token, err := googleConfig.Exchange(ctx, code)
+func (u *user) GetFirebaseUser(ctx *gin.Context, uid string) (*firebase_auth.UserRecord, error) {
+	user, err := u.firebase.Auth.GetUser(ctx, uid)
 	if err != nil {
-		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
+		return nil, err
 	}
 
-	response, err := http.Get("https://www.googleapis.com/oauth2/v2/userinfo?access_token=" + token.AccessToken)
-	if err != nil {
-		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
-	}
-	defer response.Body.Close()
-
-	responseData, err := io.ReadAll(response.Body)
-	if err != nil {
-		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
-	}
-
-	err = json.Unmarshal(responseData, &userResponseGoogle)
-	if err != nil {
-		return userResponseGoogle, errors.NewWithCode(500, err.Error(), "HTTPStatusInternalServerError")
-	}
-
-	return userResponseGoogle, nil
+	return user, nil
 }
 
 func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, error) {

@@ -1,7 +1,7 @@
 package usecase
 
 import (
-	"os"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
 	"live-easy-backend/sdk/errors"
@@ -13,8 +13,8 @@ import (
 
 type UserInterface interface {
 	Login(ctx *gin.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error)
+	LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error)
 	Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error)
-	LoginWithGoogle(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (entity.UserLoginResponse, error)
 }
 
 type User struct {
@@ -55,36 +55,27 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 	return userResponse, nil
 }
 
-func (u *User) LoginWithGoogle(ctx *gin.Context, callbackParam entity.GoogleCallbackParam) (entity.UserLoginResponse, error) {
+func (u *User) LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error) {
 	var userResponse entity.UserLoginResponse
-	if callbackParam.State != os.Getenv("OAUTH_STATE") {
-		return userResponse, errors.NewWithCode(401, "Invalid state", "HTTPStatusUnauthorized")
-	}
 
-	if callbackParam.Code == "" {
-		return userResponse, errors.NewWithCode(401, "Invalid code", "HTTPStatusUnauthorized")
-	}
-
-	userResponseGoogle, err := u.userRepo.GoogleCallback(ctx, callbackParam.Code)
+	firebaseUser, err := u.userRepo.GetFirebaseUser(ctx, userGoogleInput.FirebaseUID)
 	if err != nil {
 		return userResponse, err
 	}
 
-	userParam := entity.UserParam{
-		Email: userResponseGoogle["email"].(string),
-	}
+	userParam := entity.UserParam{Email: firebaseUser.Email}
+
 	user, err := u.userRepo.Get(ctx, userParam)
-	if err != nil && errors.GetCode(err) != 404 {
-		return userResponse, err
-	} else if errors.GetCode(err) == 404 {
-		userInput := entity.UserRegisterInputParam{
-			Email: userResponseGoogle["email"].(string),
-			Name:  userResponseGoogle["name"].(string),
-		}
-		user, err = u.registerWithGoogle(ctx, userInput)
+	if errors.GetCode(err) == http.StatusNotFound {
+		user, err = u.registerFromGoogleAccount(ctx, entity.UserRegisterInputParam{
+			Email: firebaseUser.Email,
+			Name:  firebaseUser.DisplayName,
+		})
 		if err != nil {
 			return userResponse, err
 		}
+	} else if err != nil {
+		return userResponse, err
 	}
 
 	token, err := jwt.GetToken(user)
@@ -96,6 +87,23 @@ func (u *User) LoginWithGoogle(ctx *gin.Context, callbackParam entity.GoogleCall
 	userResponse.Token = token
 
 	return userResponse, nil
+}
+
+func (u *User) registerFromGoogleAccount(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
+	var user entity.User
+
+	user = entity.User{
+		Email:           userInput.Email,
+		Name:            userInput.Name,
+		IsGoogleAccount: true,
+	}
+
+	user, err := u.userRepo.Create(ctx, user)
+	if err != nil {
+		return user, err
+	}
+
+	return user, nil
 }
 
 func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
@@ -117,23 +125,6 @@ func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputPara
 	}
 
 	user, err = u.userRepo.Create(ctx, user)
-	if err != nil {
-		return user, err
-	}
-
-	return user, nil
-}
-
-func (u *User) registerWithGoogle(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
-	var user entity.User
-
-	user = entity.User{
-		Email:           userInput.Email,
-		Name:            userInput.Name,
-		IsGoogleAccount: true,
-	}
-
-	user, err := u.userRepo.Create(ctx, user)
 	if err != nil {
 		return user, err
 	}

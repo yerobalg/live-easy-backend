@@ -24,8 +24,8 @@ func main() {
 		panic(err)
 	}
 
-	// init OAuth
-	oauth := infrastructure.InitOAuth()
+	// init Firebase
+	firebase := infrastructure.InitFirebase()
 
 	// init Storage
 	storage := infrastructure.InitStorage(
@@ -41,13 +41,13 @@ func main() {
 	}
 
 	// init repository
-	repo := repository.Init(*db, *oauth, *storage)
+	repo := repository.Init(*db, *firebase, *storage)
 
 	// init usecase
 	uc := usecase.Init(repo)
 
 	// init handler
 	router := gin.Default()
-	rest := handler.Init(router, uc, oauth)
+	rest := handler.Init(router, uc)
 	rest.Run()
 }

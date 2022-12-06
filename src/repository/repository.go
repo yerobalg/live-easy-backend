@@ -10,9 +10,9 @@ type Repository struct {
 	Medicine MedicineInterface
 }
 
-func Init(db sql.DB, oauth infrastructure.OAuth, storage infrastructure.Storage) *Repository {
+func Init(db sql.DB, firebase infrastructure.Firebase, storage infrastructure.Storage) *Repository {
 	return &Repository{
-		User:     InitUser(db, oauth),
+		User:     InitUser(db, firebase),
 		Medicine: InitMedicine(db, storage),
 	}
 }

@@ -5,23 +5,20 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
-	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/src/entity"
 	"live-easy-backend/src/usecase"
 )
 
 type rest struct {
-	http  *gin.Engine
-	uc    *usecase.Usecase
-	oauth *infrastructure.OAuth
+	http *gin.Engine
+	uc   *usecase.Usecase
 }
 
-func Init(http *gin.Engine, uc *usecase.Usecase, o *infrastructure.OAuth) *rest {
+func Init(http *gin.Engine, uc *usecase.Usecase) *rest {
 	return &rest{
-		http:  http,
-		uc:    uc,
-		oauth: o,
+		http: http,
+		uc:   uc,
 	}
 }
 
@@ -66,8 +63,7 @@ func (r *rest) Run() {
 	// Auth routes
 	r.http.POST("api/v1/auth/register", r.Register)
 	r.http.POST("api/v1/auth/login", r.Login)
-	r.http.GET("api/v1/auth/login/google", r.LoginWithGoogle)
-	r.http.GET("api/v1/auth/login/google/callback", r.LoginWithGoogleCallback)
+	r.http.POST("api/v1/auth/login/google", r.LoginWithGoogle)
 
 	// Protected Routes
 	v1 := r.http.Group("api/v1", r.Authorization())

@@ -31,15 +31,14 @@ type UserLoginInputParam struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type UserLoginGoogleInputParam struct {
+	FirebaseUID string `json:"firebaseUID" binding:"required"`
+}
+
 type UserRegisterInputParam struct {
 	Email    string `json:"email" binding:"required,email"`
 	Password string `json:"password" binding:"required"`
 	Name     string `json:"name" binding:"required"`
-}
-
-type GoogleCallbackParam struct {
-	Code  string `form:"code"`
-	State string `form:"state"`
 }
 
 type UserLoginResponse struct {
