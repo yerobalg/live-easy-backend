@@ -1,0 +1,32 @@
+name: Deploy LiveEasy Backend
+on: [workflow_dispatch]
+jobs:
+  web-deploy:
+    name: 🎉 Deploy LiveEasy Backend
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v2
+
+      - name: 📁 Send files via SFTP
+        uses: wlixcc/SFTP-Deploy-Action@v1.2.4
+        with:
+          username: ${{ secrets.SSH_USERNAME }}
+          server: ${{ secrets.SSH_HOST }}
+          password: ${{ secrets.PASSWORD }}
+          local_path: "./*"
+          remote_path: "/home/yerobal/live-easy-backend"
+
+      - name: 🌟 Run server
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          script: |
+            pm2 delete http
+            cd "/home/yerobal/live-easy-backend/app/http"
+            go build .
+            cd ../../
+            pm2 start app/http/http --name http
