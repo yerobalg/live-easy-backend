@@ -1,8 +1,9 @@
 package repository
 
 import (
+	"context"
+
 	firebase_auth "firebase.google.com/go/auth"
-	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
@@ -10,9 +11,9 @@ import (
 )
 
 type UserInterface interface {
-	Get(ctx *gin.Context, params entity.UserParam) (entity.User, error)
-	Create(ctx *gin.Context, user entity.User) (entity.User, error)
-	VerifyFirebaseToken(ctx *gin.Context, firebaseJWT string) (*firebase_auth.Token, error)
+	Get(ctx context.Context, params entity.UserParam) (entity.User, error)
+	Create(ctx context.Context, user entity.User) (entity.User, error)
+	VerifyFirebaseToken(ctx context.Context, firebaseJWT string) (*firebase_auth.Token, error)
 }
 
 type user struct {
@@ -27,14 +28,14 @@ func InitUser(db sql.DB, firebase infrastructure.Firebase) UserInterface {
 	}
 }
 
-func (u *user) VerifyFirebaseToken(ctx *gin.Context, firebaseJWT string) (*firebase_auth.Token, error) {
+func (u *user) VerifyFirebaseToken(ctx context.Context, firebaseJWT string) (*firebase_auth.Token, error) {
 	return u.firebase.Auth.VerifyIDToken(ctx, firebaseJWT)
 }
 
-func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, error) {
+func (u *user) Get(ctx context.Context, params entity.UserParam) (entity.User, error) {
 	var user entity.User
 
-	res := u.db.GetDB(ctx).Where(params).First(&user)
+	res := u.db.WithContext(ctx).Where(params).First(&user)
 	if res.RowsAffected == 0 {
 		return user, errors.NotFound("User")
 	} else if res.Error != nil {
@@ -44,8 +45,8 @@ func (u *user) Get(ctx *gin.Context, params entity.UserParam) (entity.User, erro
 	return user, nil
 }
 
-func (u *user) Create(ctx *gin.Context, user entity.User) (entity.User, error) {
-	if err := u.db.GetDB(ctx).Create(&user).Error; err != nil {
+func (u *user) Create(ctx context.Context, user entity.User) (entity.User, error) {
+	if err := u.db.WithContext(ctx).Create(&user).Error; err != nil {
 		return user, err
 	}
 

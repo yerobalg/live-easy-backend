@@ -1,9 +1,8 @@
 package appcontext
 
 import (
+	"context"
 	"time"
-
-	"github.com/gin-gonic/gin"
 )
 
 type contextKey string
@@ -23,62 +22,67 @@ const (
 	HeaderDeviceType   = "x-device-type"
 )
 
-func SetRequestId(ctx *gin.Context, rid string) {
-	ctx.Set(string(requestId), rid)
+func SetRequestId(ctx context.Context, rid string) context.Context {
+	return context.WithValue(ctx, requestId, rid)
 }
 
-func GetRequestId(ctx *gin.Context) string {
-	rid, ok := ctx.Get(string(requestId))
+func GetRequestId(ctx context.Context) string {
+	rid, ok := ctx.Value(requestId).(string)
 	if !ok {
 		return ""
 	}
-	return rid.(string)
+
+	return rid
 }
 
-func SetServiceVersion(ctx *gin.Context, version string) {
-	ctx.Set(string(serviceVersion), version)
+func SetServiceVersion(ctx context.Context, version string) context.Context {
+	return context.WithValue(ctx, serviceVersion, version)
 }
 
-func GetServiceVersion(ctx *gin.Context) string {
-	version, ok := ctx.Get(string(serviceVersion))
+func GetServiceVersion(ctx context.Context) string {
+	version, ok := ctx.Value(serviceVersion).(string)
 	if !ok {
 		return ""
 	}
-	return version.(string)
+
+	return version
 }
 
-func SetUserAgent(ctx *gin.Context, ua string) {
-	ctx.Set(string(userAgent), ua)
+func SetUserAgent(ctx context.Context, ua string) context.Context {
+	return context.WithValue(ctx, userAgent, ua)
 }
 
-func GetUserAgent(ctx *gin.Context) string {
-	ua, ok := ctx.Get(string(userAgent))
+func GetUserAgent(ctx context.Context) string {
+	ua, ok := ctx.Value(userAgent).(string)
 	if !ok {
 		return ""
 	}
-	return ua.(string)
+
+	return ua
 }
 
-func SetRequestStartTime(ctx *gin.Context, t time.Time) {
-	ctx.Set(string(requestStartTime), t)
+func SetRequestStartTime(ctx context.Context, t time.Time) context.Context {
+	return context.WithValue(ctx, requestStartTime, t)
 }
 
-func GetRequestStartTime(ctx *gin.Context) time.Time {
-	t, ok := ctx.Get(string(requestStartTime))
+func GetRequestStartTime(ctx context.Context) time.Time {
+	t, ok := ctx.Value(requestStartTime).(time.Time)
 	if !ok {
 		return time.Time{}
 	}
-	return t.(time.Time)
+
+	return t
 }
 
-func SetDeviceType(ctx *gin.Context, platform string) {
-	ctx.Set(string(deviceType), platform)
+func SetDeviceType(ctx context.Context, platform string) context.Context {
+	return context.WithValue(ctx, deviceType, platform)
 }
 
-func GetDeviceType(ctx *gin.Context) string {
-	platform, ok := ctx.Get(string(deviceType))
+func GetDeviceType(ctx context.Context) string {
+	platform, ok := ctx.Value(deviceType).(string)
 	if !ok {
 		return "web"
 	}
-	return platform.(string)
+
+	return platform
 }

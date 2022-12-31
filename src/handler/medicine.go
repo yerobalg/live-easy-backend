@@ -20,7 +20,7 @@ func (r *rest) CreateMedicine(ctx *gin.Context) {
 		return
 	}
 
-	medicine, err := r.uc.Medicine.Create(ctx, medicineInput, image)
+	medicine, err := r.uc.Medicine.Create(ctx.Request.Context(), medicineInput, image)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -36,7 +36,7 @@ func (r *rest) GetMedicine(ctx *gin.Context) {
 		return
 	}
 
-	medicine, err := r.uc.Medicine.Get(ctx, medicineParam)
+	medicine, err := r.uc.Medicine.Get(ctx.Request.Context(), medicineParam)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -52,7 +52,7 @@ func (r *rest) GetListMedicines(ctx *gin.Context) {
 		return
 	}
 
-	medicine, pg, err := r.uc.Medicine.GetList(ctx, medicineParam)
+	medicine, pg, err := r.uc.Medicine.GetList(ctx.Request.Context(), medicineParam)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -76,7 +76,7 @@ func (r *rest) UpdateMedicine(ctx *gin.Context) {
 
 	image, _ := file.Init(ctx, "image")
 
-	err := r.uc.Medicine.Update(ctx, medicineParam, medicineInput, image)
+	err := r.uc.Medicine.Update(ctx.Request.Context(), medicineParam, medicineInput, image)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -92,7 +92,7 @@ func (r *rest) DeleteMedicine(ctx *gin.Context) {
 		return
 	}
 
-	err := r.uc.Medicine.Delete(ctx, medicineParam)
+	err := r.uc.Medicine.Delete(ctx.Request.Context(), medicineParam)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return

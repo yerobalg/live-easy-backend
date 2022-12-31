@@ -1,11 +1,11 @@
 package repository
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"net/url"
 
-	"github.com/gin-gonic/gin"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
 	"live-easy-backend/sdk/errors"
@@ -14,13 +14,13 @@ import (
 )
 
 type MedicineInterface interface {
-	Create(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error)
-	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
-	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
-	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error
-	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
-	UploadImage(ctx *gin.Context, file *file.File) (string, error)
-	DeleteImage(ctx *gin.Context, imageURL string) error
+	Create(ctx context.Context, medicine entity.Medicine) (entity.Medicine, error)
+	Get(ctx context.Context, params entity.MedicineParam) (entity.Medicine, error)
+	GetList(ctx context.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
+	Update(ctx context.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error
+	Delete(ctx context.Context, medicineParam entity.MedicineParam) error
+	UploadImage(ctx context.Context, file *file.File) (string, error)
+	DeleteImage(ctx context.Context, imageURL string) error
 }
 
 type medicine struct {
@@ -35,18 +35,18 @@ func InitMedicine(db sql.DB, storage infrastructure.Storage) MedicineInterface {
 	}
 }
 
-func (m *medicine) Create(ctx *gin.Context, medicine entity.Medicine) (entity.Medicine, error) {
-	if err := m.db.GetDB(ctx).Create(&medicine).Error; err != nil {
+func (m *medicine) Create(ctx context.Context, medicine entity.Medicine) (entity.Medicine, error) {
+	if err := m.db.WithContext(ctx).Create(&medicine).Error; err != nil {
 		return medicine, err
 	}
 
 	return medicine, nil
 }
 
-func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error) {
+func (m *medicine) Get(ctx context.Context, params entity.MedicineParam) (entity.Medicine, error) {
 	var medicine entity.Medicine
 
-	res := m.db.GetDB(ctx).Where(params).First(&medicine)
+	res := m.db.WithContext(ctx).Where(params).First(&medicine)
 	if res.RowsAffected == 0 {
 		return medicine, errors.NotFound("Medicine")
 	} else if res.Error != nil {
@@ -56,13 +56,13 @@ func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 	return medicine, nil
 }
 
-func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
+func (m *medicine) GetList(ctx context.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
 	var medicine []entity.Medicine
 
 	pg := entity.FormatPaginationParam(params.PaginationParam)
 
 	if err := m.db.
-		GetDB(ctx).
+		WithContext(ctx).
 		Where(params).
 		Offset(int(pg.Offset)).
 		Limit(int(pg.Limit)).
@@ -71,7 +71,7 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	}
 
 	if err := m.db.
-		GetDB(ctx).
+		WithContext(ctx).
 		Model(&medicine).
 		Where(params).
 		Count(&pg.TotalElement).Error; err != nil {
@@ -82,9 +82,9 @@ func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicine, &pg, nil
 }
 
-func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error {
+func (m *medicine) Update(ctx context.Context, medicineParam entity.MedicineParam, medicine entity.Medicine) error {
 	res := m.db.
-		GetDB(ctx).
+		WithContext(ctx).
 		Model(entity.Medicine{}).
 		Where(&medicineParam).
 		Updates(&medicine)
@@ -98,9 +98,9 @@ func (m *medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, 
 	return nil
 }
 
-func (m *medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+func (m *medicine) Delete(ctx context.Context, medicineParam entity.MedicineParam) error {
 	res := m.db.
-		GetDB(ctx).
+		WithContext(ctx).
 		Where(&medicineParam).
 		Delete(&entity.Medicine{})
 	if res.Error != nil {
@@ -112,7 +112,7 @@ func (m *medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) 
 	return nil
 }
 
-func (m *medicine) UploadImage(ctx *gin.Context, file *file.File) (string, error) {
+func (m *medicine) UploadImage(ctx context.Context, file *file.File) (string, error) {
 	var imageURL string
 
 	storageHandler, err := m.storage.GetObjectPlace(fmt.Sprintf("%s/%s", m.storage.FolderName, file.Meta.Filename))
@@ -145,7 +145,7 @@ func (m *medicine) UploadImage(ctx *gin.Context, file *file.File) (string, error
 	return imageURL, nil
 }
 
-func (m *medicine) DeleteImage(ctx *gin.Context, fileName string) error {
+func (m *medicine) DeleteImage(ctx context.Context, fileName string) error {
 	storageHandler, err := m.storage.GetObjectPlace(fmt.Sprintf("%s/%s", m.storage.FolderName, fileName))
 	if err != nil {
 		return err

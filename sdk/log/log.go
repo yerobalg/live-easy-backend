@@ -7,6 +7,8 @@ import (
 	"strings"
 
 	"github.com/sirupsen/logrus"
+	"live-easy-backend/sdk/appcontext"
+	"live-easy-backend/sdk/auth"
 )
 
 type Logger struct {
@@ -27,29 +29,41 @@ func Init() *Logger {
 	}
 }
 
-func (l *Logger) Debug(ctx context.Context, message string, fields ...interface{}) {
-	fmt.Println(fields...)
-	l.log.WithContext(ctx).Debug(message)
+func (l *Logger) Debug(ctx context.Context, message string, field ...interface{}) {
+	l.log.WithContext(ctx).WithFields(getFields(ctx, field...)).Debug(message)
 }
 
-func (l *Logger) Info(ctx context.Context, message string, fields ...interface{}) {
-	fmt.Println(fields...)
-	l.log.WithContext(ctx).Info(message)
+func (l *Logger) Info(ctx context.Context, message string, field ...interface{}) {
+	l.log.WithContext(ctx).WithFields(getFields(ctx, field...)).Info(message)
 }
 
-func (l *Logger) Warn(ctx context.Context, message string, fields ...interface{}) {
-	fmt.Println(fields...)
-	l.log.WithContext(ctx).Warn(message)
+func (l *Logger) Warn(ctx context.Context, message string, field ...interface{}) {
+	l.log.WithContext(ctx).WithFields(getFields(ctx, field...)).Warn(message)
 }
 
-func (l *Logger) Error(ctx context.Context, message string, fields ...interface{}) {
-	fmt.Println(fields...)
-	l.log.WithContext(ctx).Error(message)
+func (l *Logger) Error(ctx context.Context, message string, field ...interface{}) {
+	l.log.WithContext(ctx).WithFields(getFields(ctx, field...)).Error(message)
 }
 
-func (l *Logger) Fatal(ctx context.Context, message string, fields ...interface{}) {
-	fmt.Println(fields...)
-	l.log.WithContext(ctx).Fatal(message)
+func (l *Logger) Fatal(ctx context.Context, message string, field ...interface{}) {
+	l.log.WithContext(ctx).WithFields(getFields(ctx, field...)).Fatal(message)
+}
+
+func getFields(ctx context.Context, fields ...interface{}) logrus.Fields {
+	logFields := logrus.Fields{
+		"request_id":      appcontext.GetRequestId(ctx),
+		"service_version": appcontext.GetServiceVersion(ctx),
+		"user_agent":      appcontext.GetUserAgent(ctx),
+		"user_id":         auth.GetUserID(ctx),
+	}
+
+	if len(fields) > 0 {
+		logFields["data"] = fields[0]
+	} else {
+		logFields["data"] = nil
+	}
+
+	return logFields
 }
 
 func fileInfo(skip int) string {

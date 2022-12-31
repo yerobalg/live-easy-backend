@@ -7,7 +7,6 @@ import (
 	"live-easy-backend/sdk/appcontext"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/src/entity"
-
 	"github.com/gin-gonic/gin"
 	"github.com/gin-gonic/gin/binding"
 )
@@ -26,11 +25,11 @@ func (r *rest) BindBody(ctx *gin.Context, body interface{}) error {
 
 func getRequestMetadata(ctx *gin.Context) entity.Meta {
 	meta := entity.Meta{
-		RequestID: appcontext.GetRequestId(ctx),
+		RequestID: appcontext.GetRequestId(ctx.Request.Context()),
 		Time:      time.Now().Format(time.RFC3339),
 	}
 
-	requestStartTime := appcontext.GetRequestStartTime(ctx)
+	requestStartTime := appcontext.GetRequestStartTime(ctx.Request.Context())
 	if !requestStartTime.IsZero() {
 		elapsedTimeMs := time.Since(requestStartTime).Milliseconds()
 		meta.TimeElapsed = fmt.Sprintf("%dms", elapsedTimeMs)
@@ -41,7 +40,7 @@ func getRequestMetadata(ctx *gin.Context) entity.Meta {
 
 func SuccessResponse(ctx *gin.Context, message string, data interface{}, pg *entity.PaginationParam) {
 	ctx.JSON(200, entity.HTTPResponse{
-		Meta :      getRequestMetadata(ctx),
+		Meta:       getRequestMetadata(ctx),
 		Message:    message,
 		IsSuccess:  true,
 		Data:       data,

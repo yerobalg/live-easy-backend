@@ -2,6 +2,7 @@ package handler
 
 import (
 	"github.com/gin-gonic/gin"
+	"live-easy-backend/sdk/auth"
 	"live-easy-backend/src/entity"
 )
 
@@ -19,7 +20,7 @@ func (r *rest) Login(ctx *gin.Context) {
 		return
 	}
 
-	userResponse, err := r.uc.User.Login(ctx, userParam, userInput)
+	userResponse, err := r.uc.User.Login(ctx.Request.Context(), userParam, userInput)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -36,7 +37,7 @@ func (r *rest) LoginWithGoogle(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.uc.User.LoginWithGoogle(ctx, userGoogleInput)
+	user, err := r.uc.User.LoginWithGoogle(ctx.Request.Context(), userGoogleInput)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return
@@ -46,7 +47,7 @@ func (r *rest) LoginWithGoogle(ctx *gin.Context) {
 }
 
 func (r *rest) GetUserProfile(ctx *gin.Context) {
-	user := ctx.MustGet("user")
+	user := auth.GetUser(ctx.Request.Context())
 
 	SuccessResponse(ctx, "Get user profile success", user, nil)
 }
@@ -59,7 +60,7 @@ func (r *rest) Register(ctx *gin.Context) {
 		return
 	}
 
-	user, err := r.uc.User.Register(ctx, userInput)
+	user, err := r.uc.User.Register(ctx.Request.Context(), userInput)
 	if err != nil {
 		ErrorResponse(ctx, err)
 		return

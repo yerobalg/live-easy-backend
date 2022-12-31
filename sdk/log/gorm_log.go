@@ -47,9 +47,9 @@ type Interface interface {
 }
 
 // New initialize logger
-func New(config Config, serverLogger *Logger) Interface {
+func New(serverLogger *Logger) Interface {
 	return &GormLogger{
-		Config:       config,
+		Config:       Config{LogLevel: Info},
 		ServerLogger: serverLogger,
 	}
 }
@@ -57,6 +57,13 @@ func New(config Config, serverLogger *Logger) Interface {
 type GormLogger struct {
 	Config
 	ServerLogger *Logger
+}
+
+type SQLLogger struct {
+	TimeElapsed  string `json:"time_elapsed"`
+	RowsAffected int64  `json:"rows_affected"`
+	Query        string `json:"query"`
+	IsError      bool   `json:"is_error"`
 }
 
 // LogMode log mode
@@ -91,30 +98,31 @@ func (l GormLogger) Trace(ctx context.Context, begin time.Time, fc func() (strin
 		return
 	}
 
+	sql, rows := fc()
 	elapsed := time.Since(begin)
 	switch {
-	case err != nil && l.LogLevel >= Error && (!errors.Is(err, ErrRecordNotFound) || !l.IgnoreRecordNotFoundError):
-		sql, rows := fc()
-		if rows == -1 {
-			l.Error(ctx, err.Error(), "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", "-", "sql", sql)
-		} else {
-			l.Error(ctx, err.Error(), "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", rows, "sql", sql)
+	case err != nil && l.LogLevel >= Error:
+		sqlLogger := SQLLogger{
+			TimeElapsed:  fmt.Sprintf("%.2fms", float64(elapsed.Nanoseconds())/1e6),
+			RowsAffected: rows,
+			Query:        sql,
 		}
-	case elapsed > l.SlowThreshold && l.SlowThreshold != 0 && l.LogLevel >= Warn:
-		sql, rows := fc()
-		slowLog := fmt.Sprintf("SLOW SQL >= %v", l.SlowThreshold)
 		if rows == -1 {
-			l.Warn(ctx, slowLog, "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", "-", "sql", sql)
-		} else {
-			l.Warn(ctx, slowLog, "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", rows, "sql", sql)
+			sqlLogger.RowsAffected = 0
 		}
+
+		l.Error(ctx, err.Error(), sqlLogger)
 	case l.LogLevel == Info:
-		sql, rows := fc()
-		if rows == -1 {
-			l.Info(ctx, "sql", "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", "-", "query", sql)
-		} else {
-			l.Info(ctx, "sql", "elapsed", float64(elapsed.Nanoseconds())/1e6, "rows", rows, "query", sql)
+		sqlLogger := SQLLogger{
+			TimeElapsed:  fmt.Sprintf("%.2fms", float64(elapsed.Nanoseconds())/1e6),
+			RowsAffected: rows,
+			Query:        sql,
 		}
+		if rows == -1 {
+			sqlLogger.RowsAffected = 0
+		}
+
+		l.Info(ctx, "sql", sqlLogger)
 	}
 }
 

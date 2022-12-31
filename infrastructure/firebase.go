@@ -2,7 +2,6 @@ package infrastructure
 
 import (
 	"context"
-	"fmt"
 
 	firebase "firebase.google.com/go"
 	firebase_auth "firebase.google.com/go/auth"
@@ -24,8 +23,6 @@ func InitFirebase() *Firebase {
 	if err != nil {
 		panic(err)
 	}
-
-	fmt.Println("Successfully connected to firebase!")
 
 	return &Firebase{
 		Auth: firebaseAuth,

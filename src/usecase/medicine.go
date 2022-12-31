@@ -1,10 +1,10 @@
 package usecase
 
 import (
+	"context"
 	"fmt"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"live-easy-backend/sdk/auth"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/sdk/file"
@@ -15,11 +15,11 @@ import (
 )
 
 type MedicineInterface interface {
-	Create(ctx *gin.Context, medicineInput entity.MedicineInputParam, image *file.File) (entity.Medicine, error)
-	Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error)
-	GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
-	Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error
-	Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error
+	Create(ctx context.Context, medicineInput entity.MedicineInputParam, image *file.File) (entity.Medicine, error)
+	Get(ctx context.Context, params entity.MedicineParam) (entity.Medicine, error)
+	GetList(ctx context.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error)
+	Update(ctx context.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error
+	Delete(ctx context.Context, medicineParam entity.MedicineParam) error
 }
 
 type Medicine struct {
@@ -32,7 +32,7 @@ func InitMedicine(repo repository.MedicineInterface) MedicineInterface {
 	}
 }
 
-func (m *Medicine) Create(ctx *gin.Context, medicineInput entity.MedicineInputParam, image *file.File) (entity.Medicine, error) {
+func (m *Medicine) Create(ctx context.Context, medicineInput entity.MedicineInputParam, image *file.File) (entity.Medicine, error) {
 	userID := auth.GetUserID(ctx)
 	now := time.Now().Unix()
 	medicine := entity.Medicine{
@@ -68,7 +68,7 @@ func (m *Medicine) Create(ctx *gin.Context, medicineInput entity.MedicineInputPa
 	return medicine, nil
 }
 
-func (m *Medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Medicine, error) {
+func (m *Medicine) Get(ctx context.Context, params entity.MedicineParam) (entity.Medicine, error) {
 	params.UserID = auth.GetUserID(ctx)
 
 	medicine, err := m.repo.Get(ctx, params)
@@ -79,7 +79,7 @@ func (m *Medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 	return medicine, nil
 }
 
-func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
+func (m *Medicine) GetList(ctx context.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
 	params.UserID = auth.GetUserID(ctx)
 
 	medicines, pg, err := m.repo.GetList(ctx, params)
@@ -90,7 +90,7 @@ func (m *Medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]ent
 	return medicines, pg, nil
 }
 
-func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error {
+func (m *Medicine) Update(ctx context.Context, medicineParam entity.MedicineParam, medicineInput entity.MedicineUpdateInputParam, image *file.File) error {
 	userID := auth.GetUserID(ctx)
 
 	medicineParam.UserID = userID
@@ -131,7 +131,7 @@ func (m *Medicine) Update(ctx *gin.Context, medicineParam entity.MedicineParam, 
 	return nil
 }
 
-func (m *Medicine) Delete(ctx *gin.Context, medicineParam entity.MedicineParam) error {
+func (m *Medicine) Delete(ctx context.Context, medicineParam entity.MedicineParam) error {
 	medicineParam.UserID = auth.GetUserID(ctx)
 
 	medicine, err := m.repo.Get(ctx, medicineParam)

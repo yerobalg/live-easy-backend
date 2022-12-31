@@ -5,7 +5,6 @@ import (
 	"os"
 	"time"
 
-	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
 	"live-easy-backend/sdk/log"
@@ -35,10 +34,7 @@ func initMySQL(serverLogger *log.Logger) (*gorm.DB, error) {
 	)
 
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{
-		Logger: log.New(log.Config{
-			IgnoreRecordNotFoundError: true,
-			LogLevel: log.Info,
-		}, serverLogger),
+		Logger: log.New(serverLogger),
 	})
 	if err != nil {
 		return nil, err
@@ -54,11 +50,5 @@ func initMySQL(serverLogger *log.Logger) (*gorm.DB, error) {
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 	sqlDB.SetConnMaxLifetime(10 * time.Minute)
 
-	fmt.Println("Successfully connected to database!")
-
 	return db, nil
-}
-
-func (db *DB) GetDB(ctx *gin.Context) *gorm.DB {
-	return db.WithContext(ctx)
 }

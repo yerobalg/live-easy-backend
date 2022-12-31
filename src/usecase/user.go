@@ -1,9 +1,9 @@
 package usecase
 
 import (
+	"context"
 	"net/http"
 
-	"github.com/gin-gonic/gin"
 	"live-easy-backend/sdk/errors"
 	"live-easy-backend/sdk/jwt"
 	"live-easy-backend/sdk/password"
@@ -12,9 +12,9 @@ import (
 )
 
 type UserInterface interface {
-	Login(ctx *gin.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error)
-	LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error)
-	Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error)
+	Login(ctx context.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error)
+	LoginWithGoogle(ctx context.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error)
+	Register(ctx context.Context, userInput entity.UserRegisterInputParam) (entity.User, error)
 }
 
 type User struct {
@@ -27,7 +27,7 @@ func InitUser(ur repository.UserInterface) UserInterface {
 	}
 }
 
-func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error) {
+func (u *User) Login(ctx context.Context, userParam entity.UserParam, userInput entity.UserLoginInputParam) (entity.UserLoginResponse, error) {
 	var userResponse entity.UserLoginResponse
 
 	userParam.Email = userInput.Email
@@ -55,7 +55,7 @@ func (u *User) Login(ctx *gin.Context, userParam entity.UserParam, userInput ent
 	return userResponse, nil
 }
 
-func (u *User) LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error) {
+func (u *User) LoginWithGoogle(ctx context.Context, userGoogleInput entity.UserLoginGoogleInputParam) (entity.UserLoginResponse, error) {
 	var userResponse entity.UserLoginResponse
 
 	firebaseToken, err := u.userRepo.VerifyFirebaseToken(ctx, userGoogleInput.FirebaseJWT)
@@ -90,7 +90,7 @@ func (u *User) LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLogi
 	return userResponse, nil
 }
 
-func (u *User) registerFromGoogleAccount(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
+func (u *User) registerFromGoogleAccount(ctx context.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
 	var user entity.User
 
 	user = entity.User{
@@ -107,7 +107,7 @@ func (u *User) registerFromGoogleAccount(ctx *gin.Context, userInput entity.User
 	return user, nil
 }
 
-func (u *User) Register(ctx *gin.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
+func (u *User) Register(ctx context.Context, userInput entity.UserRegisterInputParam) (entity.User, error) {
 	var user entity.User
 
 	if !password.IsValid(userInput.Password) {

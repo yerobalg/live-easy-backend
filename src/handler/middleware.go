@@ -4,12 +4,12 @@ import (
 	"context"
 	"time"
 
-	"live-easy-backend/sdk/appcontext"
-	"live-easy-backend/sdk/errors"
-	"live-easy-backend/sdk/jwt"
-
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"
+	"live-easy-backend/sdk/appcontext"
+	"live-easy-backend/sdk/auth"
+	"live-easy-backend/sdk/errors"
+	"live-easy-backend/sdk/jwt"
 )
 
 // timeout middleware wraps the request context with a timeout
@@ -19,8 +19,7 @@ func (r *rest) SetTimeout(ctx *gin.Context) {
 
 	// cancel to clear resources after finished
 	defer cancel()
-
-	appcontext.SetRequestStartTime(ctx, time.Now())
+	c = appcontext.SetRequestStartTime(c, time.Now())
 
 	// replace request with context wrapped request
 	ctx.Request = ctx.Request.WithContext(c)
@@ -30,9 +29,11 @@ func (r *rest) SetTimeout(ctx *gin.Context) {
 func (r *rest) AddFieldsToContext(ctx *gin.Context) {
 	requestID := uuid.New().String()
 
-	appcontext.SetRequestId(ctx, requestID)
-	appcontext.SetUserAgent(ctx, ctx.Request.Header.Get(appcontext.HeaderUserAgent))
-	appcontext.SetDeviceType(ctx, ctx.Request.Header.Get(appcontext.HeaderDeviceType))
+	c := ctx.Request.Context()
+	c = appcontext.SetRequestId(c, requestID)
+	c = appcontext.SetUserAgent(c, ctx.Request.Header.Get(appcontext.HeaderUserAgent))
+	c = appcontext.SetDeviceType(c, ctx.Request.Header.Get(appcontext.HeaderDeviceType))
+	ctx.Request = ctx.Request.WithContext(c)
 
 	ctx.Next()
 }
@@ -72,6 +73,10 @@ func (r *rest) checkToken(ctx *gin.Context) {
 		ctx.Abort()
 		return
 	}
-	ctx.Set("user", tokenClaims["data"])
+	//ctx.Set("user", tokenClaims["data"])
+	c := ctx.Request.Context()
+	c = auth.SetUser(c, tokenClaims["data"].(map[string]interface{}))
+	ctx.Request = ctx.Request.WithContext(c)
+
 	ctx.Next()
 }
