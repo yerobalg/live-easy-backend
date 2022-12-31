@@ -8,15 +8,15 @@ import (
 	"github.com/gin-gonic/gin"
 	"gorm.io/driver/mysql"
 	"gorm.io/gorm"
-	"gorm.io/gorm/logger"
+	"live-easy-backend/sdk/log"
 )
 
 type DB struct {
 	*gorm.DB
 }
 
-func InitDB() (*DB, error) {
-	db, err := initMySQL()
+func Init(serverLogger *log.Logger) (*DB, error) {
+	db, err := initMySQL(serverLogger)
 	if err != nil {
 		return nil, err
 	}
@@ -24,7 +24,7 @@ func InitDB() (*DB, error) {
 	return &DB{db}, nil
 }
 
-func initMySQL() (*gorm.DB, error) {
+func initMySQL(serverLogger *log.Logger) (*gorm.DB, error) {
 	dataSourceName := fmt.Sprintf(
 		"%s:%s@tcp(%s:%s)/%s?charset=utf8&parseTime=True&loc=Local",
 		os.Getenv("DB_USERNAME"),
@@ -35,7 +35,10 @@ func initMySQL() (*gorm.DB, error) {
 	)
 
 	db, err := gorm.Open(mysql.Open(dataSourceName), &gorm.Config{
-		Logger: logger.Default.LogMode(logger.Info),
+		Logger: log.New(log.Config{
+			IgnoreRecordNotFoundError: true,
+			LogLevel: log.Info,
+		}, serverLogger),
 	})
 	if err != nil {
 		return nil, err

@@ -17,12 +17,13 @@ type User struct {
 	Email           string `json:"email" gorm:"not null;unique;type:varchar(255)"`
 	Password        string `json:"-" gorm:"type:text"`
 	Name            string `json:"name" gorm:"not null;type:varchar(255)"`
-	IsGoogleAccount bool   `json:"isGoogleAccount" gorm:"not null;default:false"`
+	IsGoogleAccount bool   `json:"isGoogleAccount" gorm:"not null;default:false;index"`
 }
 
 type UserParam struct {
-	ID    int64  `uri:"id" param:"id"`
-	Email string `json:"-" param:"email"`
+	ID              int64  `uri:"id" param:"id"`
+	Email           string `json:"-" param:"email"`
+	IsGoogleAccount bool   `json:"-" param:"is_google_account"`
 	PaginationParam
 }
 

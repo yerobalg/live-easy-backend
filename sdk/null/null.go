@@ -22,7 +22,7 @@ func Float64From(f float64) *float64 {
 }
 
 func BoolFrom(b bool) *bool {
-	if b == false {
+	if !b {
 		return nil
 	}
 	return &b

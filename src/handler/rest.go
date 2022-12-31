@@ -1,65 +1,50 @@
 package handler
 
 import (
+	"context"
+	"fmt"
+	"net/http"
 	"os"
+	"os/signal"
+	"sync"
+	"syscall"
+	"time"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gin-gonic/gin/binding"
-	"live-easy-backend/sdk/errors"
-	"live-easy-backend/src/entity"
+	"live-easy-backend/sdk/log"
 	"live-easy-backend/src/usecase"
 )
 
+var once = sync.Once{}
+
 type rest struct {
 	http *gin.Engine
+	log  *log.Logger
 	uc   *usecase.Usecase
 }
 
-func Init(http *gin.Engine, uc *usecase.Usecase) *rest {
-	return &rest{
-		http: http,
-		uc:   uc,
-	}
-}
+func Init(uc *usecase.Usecase, log *log.Logger) *rest {
+	r := &rest{}
+	once.Do(func() {
+		gin.SetMode(gin.ReleaseMode) // TODO: Move to config later
 
-func (r *rest) BindParam(ctx *gin.Context, param interface{}) error {
-	if err := ctx.ShouldBindUri(param); err != nil {
-		return err
-	}
+		r.http = gin.New()
+		r.log = log
+		r.uc = uc
 
-	return ctx.ShouldBindWith(param, binding.Query)
-}
-
-func (r *rest) BindBody(ctx *gin.Context, body interface{}) error {
-	return ctx.ShouldBindWith(body, binding.Default(ctx.Request.Method, ctx.ContentType()))
-}
-
-type Response struct {
-	Message    string                  `json:"message"`
-	IsSuccess  bool                    `json:"isSuccess"`
-	Data       interface{}             `json:"data"`
-	Pagination *entity.PaginationParam `json:"pagination"`
-}
-
-func SuccessResponse(ctx *gin.Context, message string, data interface{}, pg *entity.PaginationParam) {
-	ctx.JSON(200, Response{
-		Message:    message,
-		IsSuccess:  true,
-		Data:       data,
-		Pagination: pg,
+		r.RegisterMiddlewareAndRoutes()
 	})
+
+	return r
 }
 
-func ErrorResponse(ctx *gin.Context, err error) {
-	ctx.JSON(int(errors.GetCode(err)), Response{
-		Message:   errors.GetType(err),
-		IsSuccess: false,
-		Data:      errors.GetMessage(err),
-	})
-}
-
-func (r *rest) Run() {
+func (r *rest) RegisterMiddlewareAndRoutes() {
+	// Global middleware
 	r.http.Use(r.CorsMiddleware())
+	r.http.Use(gin.Recovery())
+	r.http.Use(r.SetTimeout)
+	r.http.Use(r.AddFieldsToContext)
+
 	// Auth routes
 	r.http.POST("api/v1/auth/register", r.Register)
 	r.http.POST("api/v1/auth/login", r.Login)
@@ -83,6 +68,50 @@ func (r *rest) Run() {
 		v1.PUT("medicine/:id", r.UpdateMedicine)
 		v1.DELETE("medicine/:id", r.DeleteMedicine)
 	}
+}
 
-	r.http.Run(":" + os.Getenv("APP_PORT"))
+func (r *rest) Run() {
+	/*
+		Create context that listens for the interrupt signal from the OS.
+		This will allow us to gracefully shutdown the server.
+	*/
+	c := context.Background()
+	ctx, stop := signal.NotifyContext(c, syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+
+	port := ":8080"
+	if os.Getenv("APP_PORT") != "" {
+		port = ":" + os.Getenv("APP_PORT")
+	}
+	server := &http.Server{
+		Addr:              port,
+		Handler:           r.http,
+		ReadHeaderTimeout: 2 * time.Second,
+	}
+
+	// Run the server in a goroutine so that it doesn't block the graceful shutdown handling below
+
+	go func() {
+		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+			r.log.Error(ctx, err.Error())
+		}
+	}()
+
+	r.log.Info(context.Background(), "Server is running on port "+os.Getenv("APP_PORT"))
+
+	// Block until we receive our signal.
+	<-ctx.Done()
+
+	// Restore default behavior on the interrupt signal and notify user of shutdown.
+	stop()
+	r.log.Info(context.Background(), "Shutting down server...")
+
+	// Create a deadline to wait for.
+	quitCtx, cancel := context.WithTimeout(c, 10*time.Second)
+	defer cancel()
+	if err := server.Shutdown(quitCtx); err != nil {
+		r.log.Fatal(quitCtx, fmt.Sprintf("Server Shutdown error: %s", err.Error()))
+	}
+
+	r.log.Info(context.Background(), "Server gracefully stopped")
 }

@@ -4,6 +4,20 @@ import (
 	"math"
 )
 
+type HTTPResponse struct {
+	Meta       Meta             `json:"metaData"`
+	Message    string           `json:"message"`
+	IsSuccess  bool             `json:"isSuccess"`
+	Data       interface{}      `json:"data"`
+	Pagination *PaginationParam `json:"pagination"`
+}
+
+type Meta struct {
+	Time        string  `json:"timestamp"`
+	RequestID   string `json:"requestId"`
+	TimeElapsed string `json:"timeElapsed"`
+}
+
 type PaginationParam struct {
 	Limit          int64 `form:"limit" json:"limit" gorm:"-"`
 	Page           int64 `form:"page" json:"-" gorm:"-"`
@@ -20,14 +34,16 @@ func (pg *PaginationParam) ProcessPagination(rowsAffected int64) {
 	pg.CurrentElement = rowsAffected
 }
 
-func (pg *PaginationParam) SetLimitOffset() {
-	if pg.Limit < 1 {
-		pg.Limit = 10
+func FormatPaginationParam(params PaginationParam) PaginationParam {
+	paginationParam := params
+
+	if params.Limit == 0 {
+		paginationParam.Limit = 10
 	}
 
-	if pg.Page < 1 {
-		pg.Page = 1
+	if params.Page == 0 {
+		paginationParam.Page = 1
 	}
 
-	pg.Offset = (pg.Page - 1) * pg.Limit
+	return paginationParam
 }

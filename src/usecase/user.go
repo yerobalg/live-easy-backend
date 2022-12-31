@@ -66,7 +66,7 @@ func (u *User) LoginWithGoogle(ctx *gin.Context, userGoogleInput entity.UserLogi
 	email := firebaseToken.Claims["email"].(string)
 	name := firebaseToken.Claims["name"].(string)
 
-	user, err := u.userRepo.Get(ctx, entity.UserParam{Email: email})
+	user, err := u.userRepo.Get(ctx, entity.UserParam{Email: email, IsGoogleAccount: true})
 	if errors.GetCode(err) == http.StatusNotFound {
 		user, err = u.registerFromGoogleAccount(ctx, entity.UserRegisterInputParam{
 			Email: email,

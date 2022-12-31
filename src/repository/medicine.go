@@ -59,8 +59,7 @@ func (m *medicine) Get(ctx *gin.Context, params entity.MedicineParam) (entity.Me
 func (m *medicine) GetList(ctx *gin.Context, params entity.MedicineParam) ([]entity.Medicine, *entity.PaginationParam, error) {
 	var medicine []entity.Medicine
 
-	pg := params.PaginationParam
-	pg.SetLimitOffset()
+	pg := entity.FormatPaginationParam(params.PaginationParam)
 
 	if err := m.db.
 		GetDB(ctx).

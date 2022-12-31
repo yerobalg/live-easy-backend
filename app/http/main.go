@@ -3,10 +3,10 @@ package main
 import (
 	"os"
 
-	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"live-easy-backend/database/sql"
 	"live-easy-backend/infrastructure"
+	"live-easy-backend/sdk/log"
 	"live-easy-backend/src/handler"
 	"live-easy-backend/src/repository"
 	"live-easy-backend/src/usecase"
@@ -17,9 +17,12 @@ func main() {
 	if err := godotenv.Load(); err != nil {
 		panic(err)
 	}
+	
+	// init Logger
+	logger := log.Init()
 
 	// init DB
-	db, err := sql.InitDB()
+	db, err := sql.Init(logger)
 	if err != nil {
 		panic(err)
 	}
@@ -47,7 +50,6 @@ func main() {
 	uc := usecase.Init(repo)
 
 	// init handler
-	router := gin.Default()
-	rest := handler.Init(router, uc)
+	rest := handler.Init(uc, logger)
 	rest.Run()
 }
